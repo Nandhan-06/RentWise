@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% set active = 'visits' %}
+{% block title %}My Visits · RentWise{% endblock %}
+
+{% block content %}
+  <section class="page-head">
+    <h1>Your scheduled visits</h1>
+    <p class="subhead">Visits you've booked from the properties page, most recent first.</p>
+  </section>
+
+  <div id="visit-list" class="visit-list" aria-live="polite"></div>
+  <p id="empty-state" class="empty-state" hidden>
+    No visits scheduled yet. Open a property's "Schedule visit" option to book one.
+  </p>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/visits.js"></script>
+{% endblock %}

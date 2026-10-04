@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set active = 'ai-finder' %}
+{% block title %}AI Property Finder · RentWise{% endblock %}
+
+{% block content %}
+  <section class="page-head">
+    <h1>Describe what you're looking for</h1>
+    <p class="subhead">Write it the way you'd tell a friend - RentWise turns it into search filters and only recommends properties that are actually in the database.</p>
+  </section>
+
+  <form id="ai-form" class="ai-search-bar">
+    <textarea id="ai-query" rows="2" placeholder="e.g. A furnished 2BHK in Kochi under ₹20,000 with parking"></textarea>
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="ai-status" class="ai-status" hidden></div>
+  <div id="ai-summary" class="ai-summary" hidden></div>
+  <div id="ai-filters" class="ai-filters" hidden></div>
+
+  <div id="property-grid" class="property-grid" aria-live="polite"></div>
+  <p id="empty-state" class="empty-state" hidden></p>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/ai_finder.js"></script>
+{% endblock %}

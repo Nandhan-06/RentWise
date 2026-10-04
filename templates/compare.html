@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Compare · RentWise{% endblock %}
+
+{% block content %}
+  <section class="page-head">
+    <h1>Compare properties</h1>
+    <p class="subhead">Side by side, with an AI summary of the trade-offs.</p>
+  </section>
+
+  <div id="compare-status" class="ai-status"></div>
+  <div id="compare-summary" class="ai-summary" hidden></div>
+  <div id="compare-table-wrap"></div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/compare.js"></script>
+{% endblock %}

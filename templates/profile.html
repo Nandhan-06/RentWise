@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% set active = 'profile' %}
+{% block title %}Profile · RentWise{% endblock %}
+
+{% block content %}
+  <section class="page-head">
+    <h1>Your profile</h1>
+    <p class="subhead">No login yet - this shows the single demo account seeded in the database.</p>
+  </section>
+
+  <form id="profile-form" class="profile-form">
+    <div class="field">
+      <label for="p-name">Name</label>
+      <input id="p-name" name="name" type="text" required />
+    </div>
+    <div class="field">
+      <label for="p-phone">Phone</label>
+      <input id="p-phone" name="phone" type="text" />
+    </div>
+    <div class="field">
+      <label for="p-email">Email</label>
+      <input id="p-email" name="email" type="email" required />
+    </div>
+    <button type="submit">Save changes</button>
+    <span id="profile-status" class="visit-status"></span>
+  </form>
+
+  <section class="page-head" style="padding-top: 32px;">
+    <h2>Your rental insights</h2>
+    <p class="subhead">A quick AI-generated read on the properties you've saved.</p>
+  </section>
+
+  <div id="insights-box" class="ai-summary">Loading…</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/profile.js"></script>
+{% endblock %}

@@ -1,0 +1,17 @@
+# Secrets — never commit this
+.env
+
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Leftover archives, not needed in the repo
+templates.zip
+static/css.zip
+
+# OS clutter
+.DS_Store
+Thumbs.db

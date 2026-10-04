@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Privacy · RentWise{% endblock %}
+
+{% block content %}
+  <section class="page-head">
+    <h1>Privacy Policy</h1>
+    <p class="subhead">What RentWise stores, and why.</p>
+  </section>
+  <div class="auth-card" style="max-width:640px;">
+    <p>RentWise stores your name, email, phone (if provided), and password
+    (as a salted hash, never in plain text) to run your account. It stores
+    the properties you save, visits you schedule, and reviews you post so
+    those features can work.</p>
+    <p>This data is not sold or shared with any third party — this is a
+    personal project with no advertising or external data partners. The
+    AI features (property search, chatbot) send your query text to
+    Google's Gemini API to generate a response; no account data is sent
+    beyond what a given request needs.</p>
+    <p style="color:var(--muted); font-size:13px;">A fuller version of this page is planned as part of a later polish pass on the project.</p>
+  </div>
+{% endblock %}

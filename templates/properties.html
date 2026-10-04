@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% set active = 'properties' %}
+{% block title %}Properties · RentWise{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+  <img src="/static/images/properties/hero.png" alt="Welcoming apartment interior" class="hero-background"
+    aria-hidden="true" />
+  <div class="hero-grid">
+    <div class="hero-text">
+      <span class="hero-eyebrow">Rent Smarter</span>
+      <h1 class="hero-heading">Find a Place<br>That Feels Like Home</h1>
+      <p class="hero-description">
+        Explore verified houses, hostels and PGs across top cities.
+        Your next chapter starts here.
+      </p>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-decorative">
+        Better<br>Living<br>Ahead
+        <svg class="arrow" viewBox="0 0 46 30" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+          stroke-width="1.5" stroke-linecap="round">
+          <path d="M4,4 C18,2 32,10 40,22" />
+          <path d="M32,20 L40,22 L37,14" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<form id="filter-form" class="filter-bar">
+  <div class="field">
+    <label for="f-city">City</label>
+    <input id="f-city" name="city" type="text" placeholder="e.g. Kochi" />
+  </div>
+  <div class="field">
+    <label for="f-type">Type</label>
+    <select id="f-type" name="property_type">
+      <option value="">Any</option>
+      <option>Apartment</option>
+      <option>Villa</option>
+      <option>Independent House</option>
+      <option>Studio</option>
+      <option>PG</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-bedrooms">Bedrooms</label>
+    <select id="f-bedrooms" name="bedrooms">
+      <option value="">Any</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4+</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-min">Min rent</label>
+    <input id="f-min" name="min_rent" type="number" min="0" placeholder="0" />
+  </div>
+  <div class="field">
+    <label for="f-max">Max rent</label>
+    <input id="f-max" name="max_rent" type="number" min="0" placeholder="No limit" />
+  </div>
+  <div class="field field-action">
+    <button type="submit">Apply filters</button>
+    <button type="button" id="clear-filters" class="ghost">Clear</button>
+  </div>
+</form>
+
+<p id="result-count" class="result-count"></p>
+
+<div id="property-grid" class="property-grid" aria-live="polite"></div>
+
+<p id="empty-state" class="empty-state" hidden>
+  No properties match those filters. Try widening your rent range or clearing a filter.
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/properties.js"></script>
+{% endblock %}

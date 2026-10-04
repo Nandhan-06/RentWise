@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}RentWise{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Module 7: swapped Inter for Work Sans for body text — Inter is one
+       of the three most common default web sans-serifs and reads as an
+       unstyled default; Fraunces stays for headings (already distinctive). -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="wordmark" href="/"> 
+        <img src="/static/images/logo/logo.png" alt="RentWise" height="32" />
+      </a>
+      <nav class="main-nav">
+        <a href="/" {% if active=='properties' %}class="active" {% endif %}>Properties</a>
+        <!-- <a href="/ai-finder" {% if active=='ai-finder' %}class="active" {% endif %}>AI Finder</a> -->
+        <!-- <a href="/voice-assistant" {% if active == 'voice-assistant' %}class="active"{% endif %}>Voice Assistant</a> -->
+        <a href="/my-favorites" {% if active=='favorites' %}class="active" {% endif %}>Favorites</a>
+        <a href="/my-visits" {% if active=='visits' %}class="active" {% endif %}>My Visits</a>
+        <a href="/profile" {% if active=='profile' %}class="active" {% endif %}>Profile</a>
+        {% if user %}
+        <span class="nav-user">{{ user.name.split(' ')[0] }}</span>
+        <button id="nav-logout" class="nav-logout">Log out</button>
+        {% else %}
+        <a href="/login" class="login-link {% if active == 'login' %}active{% endif %}">Log in</a>
+        <a href="/signup" class="nav-signup-btn">Sign up</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+
+    <!-- Organic wave background -->
+    <div class="footer-waves">
+      <svg viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path class="wave-layer-1" fill="#274d3d"
+          d="M0,90 C240,40 420,130 720,80 C1020,30 1200,110 1440,60 L1440,0 L0,0 Z" />
+        <path class="wave-layer-2" fill="#7ba888" fill-opacity="0.35"
+          d="M0,110 C280,70 460,140 760,100 C1040,65 1220,125 1440,90 L1440,0 L0,0 Z" />
+      </svg>
+    </div>
+
+    <div class="footer-inner wrap">
+
+      <div class="footer-brand">
+        <h2 class="footer-logo">RentWise</h2>
+        <p class="footer-tagline">Find your happy place</p>
+      </div>
+
+      <nav class="footer-col">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/properties">Properties</a></li>
+          <li><a href="/finder">Property Finder</a></li>
+          <li><a href="/favourites">Favourites</a></li>
+          <li><a href="/visits">Visits</a></li>
+          <li><a href="/login">Login / Sign Up</a></li>
+        </ul>
+      </nav>
+
+      <nav class="footer-col">
+        <h3>Popular Cities</h3>
+        <ul>
+          <li><a href="/properties?city=kochi">Kochi</a></li>
+          <li><a href="/properties?city=kakkanad">Kakkanad</a></li>
+          <li><a href="/properties?city=edappally">Edappally</a></li>
+        </ul>
+      </nav>
+
+      <nav class="footer-col">
+        <h3>Support</h3>
+        <ul>
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/contact">Contact Us</a></li>
+        </ul>
+      </nav>
+
+    </div>
+
+    <!-- Hand-drawn line-art: houses, trees, leaves -->
+    <div class="footer-illustrations wrap">
+      <svg viewBox="0 0 1200 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" fill="none"
+        stroke="#f7f3ea" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <!-- small house -->
+        <path d="M60,80 L60,50 L90,28 L120,50 L120,80 Z" />
+        <path d="M78,80 L78,62 L100,62 L100,80" />
+        <!-- second house -->
+        <path d="M180,80 L180,55 L205,38 L230,55 L230,80 Z" />
+        <path d="M195,80 L195,66 L212,66 L212,80" />
+        <!-- tree 1 -->
+        <path d="M310,80 L310,58" />
+        <path d="M295,58 C295,42 325,42 325,58 C325,68 295,68 295,58 Z" />
+        <!-- bush -->
+        <path d="M370,80 C365,68 385,68 380,80 C392,72 400,80 395,80 Z" />
+        <!-- leaves -->
+        <path d="M450,75 C458,65 470,65 470,75 C470,82 458,82 450,75 Z" />
+        <path d="M470,75 L480,68" />
+        <!-- tree 2 -->
+        <path d="M900,80 L900,55" />
+        <path d="M882,55 C882,38 918,38 918,55 C918,66 882,66 882,55 Z" />
+        <!-- house 3 -->
+        <path d="M1000,80 L1000,52 L1030,32 L1060,52 L1060,80 Z" />
+        <path d="M1015,80 L1015,64 L1035,64 L1035,80" />
+        <!-- bush -->
+        <path d="M1100,80 C1095,68 1115,68 1110,80 C1122,72 1130,80 1125,80 Z" />
+      </svg>
+    </div>
+
+    <div class="footer-divider wrap"></div>
+
+    <div class="footer-bottom wrap">
+      <p class="footer-copyright">&copy; 2026 RentWise. All rights reserved.</p>
+      <p class="footer-signature">
+        Find your happy place <span class="heart">&hearts;</span>
+        <svg class="footer-signature-underline" viewBox="0 0 160 12" preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#9dc0a6" stroke-width="1.2" stroke-linecap="round">
+          <path d="M2,6 C40,10 120,2 158,7" />
+        </svg>
+      </p>
+    </div>
+
+  </footer>
+  <!-- Module 5: AI Chatbot widget - present on every page, not per-page scripts -->
+  <div id="chat-widget">
+    <button id="chat-toggle" aria-label="Open chat assistant">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path
+          d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+      </svg>
+    </button>
+    <div id="chat-panel" hidden>
+      <div class="chat-header">
+        <span>RentWise Assistant</span>
+        <button id="chat-close" aria-label="Close chat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div id="chat-messages" class="chat-messages"></div>
+      <div id="chat-voice-status" class="chat-voice-status" hidden>
+        <span id="chat-voice-status-text">Listening…</span>
+      </div>
+      <form id="chat-form" class="chat-input-row">
+        <input id="chat-input" type="text" placeholder="Ask about listings, policies, amenities…" autocomplete="off" />
+        <button type="button" id="chat-voice-toggle" aria-label="Start live voice conversation">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+            <line x1="12" y1="19" x2="12" y2="23" />
+            <line x1="8" y1="23" x2="16" y2="23" />
+          </svg>
+        </button>
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/chatbot.js"></script>
+
+  {% block scripts %}{% endblock %}
+</body>
+
+</html>
