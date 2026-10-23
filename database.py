@@ -11,6 +11,7 @@ from contextlib import contextmanager
 
 import mysql.connector
 from mysql.connector import pooling
+from mysql.connector.errors import ProgrammingError
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -48,13 +49,31 @@ def get_cursor(commit: bool = False):
 # Properties
 # ---------------------------------------------------------------
 
-def list_properties(limit: int = 20, offset: int = 0):
+# Module 10: allowed sort orders. The API accepts only these keys and the SQL
+# text comes from THIS dictionary - a request value is never pasted into the
+# query, so there is no SQL injection route through `sort`. property_id ASC is
+# the tie-breaker: equal rents / equal timestamps (all the seed listings share
+# one) always come back in the same, predictable order - lowest id first, which
+# is also the order the list showed before sorting existed. Without it, MySQL
+# is free to return ties in a different order from one request to the next.
+SORT_ORDERS = {
+    "newest": "created_at DESC, property_id ASC",
+    "rent_low": "rent ASC, property_id ASC",
+    "rent_high": "rent DESC, property_id ASC",
+}
+
+
+def _order_by(sort: str) -> str:
+    return SORT_ORDERS.get(sort, SORT_ORDERS["newest"])
+
+
+def list_properties(limit: int = 20, offset: int = 0, sort: str = "newest"):
     with get_cursor() as cur:
         cur.execute(
-            """
+            f"""
             SELECT * FROM properties
             WHERE availability = TRUE
-            ORDER BY created_at DESC
+            ORDER BY {_order_by(sort)}
             LIMIT %s OFFSET %s
             """,
             (limit, offset),
@@ -84,6 +103,25 @@ def get_property(property_id: int):
             (property_id,),
         )
         prop["amenities"] = cur.fetchall()
+
+        # Gallery = main picture first, then any extra rows from
+        # property_images. If that table doesn't exist yet (migration not run),
+        # fall back to just the main picture instead of breaking every page
+        # that calls get_property().
+        try:
+            cur.execute(
+                "SELECT image_url FROM property_images WHERE property_id = %s ORDER BY sort_order, image_id",
+                (property_id,),
+            )
+            extra = [row["image_url"] for row in cur.fetchall()]
+        except ProgrammingError:
+            extra = []
+
+        images = []
+        for url in [prop.get("image_url")] + extra:
+            if url and url not in images:
+                images.append(url)
+        prop["images"] = images
         return prop
 
 
@@ -149,6 +187,7 @@ def keyword_fallback_search(query: str, limit: int = 20):
 def filter_properties(
     city=None, property_type=None, min_rent=None, max_rent=None,
     bedrooms=None, furnishing=None, parking=None, limit: int = 20,
+    sort: str = "newest",
 ):
     clauses = ["availability = TRUE"]
     params = []
@@ -180,7 +219,7 @@ def filter_properties(
 
     with get_cursor() as cur:
         cur.execute(
-            f"SELECT * FROM properties WHERE {where} ORDER BY created_at DESC LIMIT %s",
+            f"SELECT * FROM properties WHERE {where} ORDER BY {_order_by(sort)} LIMIT %s",
             tuple(params),
         )
         return cur.fetchall()
@@ -274,6 +313,33 @@ def create_visit(user_id: int, property_id: int, visit_date: str, visit_time: st
         return _format_visit(cur.fetchone())
 
 
+def create_contact_message(user_id, name: str, email: str, topic: str, message: str) -> int:
+    """Module 9: store a Contact-page message. user_id is None for guests."""
+    with get_cursor(commit=True) as cur:
+        cur.execute(
+            """
+            INSERT INTO contact_messages (user_id, name, email, topic, message)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (user_id, name, email, topic, message),
+        )
+        return cur.lastrowid
+
+
+def count_recent_contact_messages(email: str | None = None, minutes: int = 60) -> int:
+    """How many messages were stored in the last `minutes` minutes — for one
+    email address, or (email=None) across everyone. Used as a simple
+    anti-spam limit on POST /contact."""
+    sql = "SELECT COUNT(*) AS n FROM contact_messages WHERE created_at >= (NOW() - INTERVAL %s MINUTE)"
+    params = [minutes]
+    if email is not None:
+        sql += " AND email = %s"
+        params.append(email)
+    with get_cursor() as cur:
+        cur.execute(sql, tuple(params))
+        return cur.fetchone()["n"]
+
+
 def get_visit(visit_id: int):
     with get_cursor() as cur:
         cur.execute("SELECT * FROM visits WHERE visit_id = %s", (visit_id,))
@@ -352,6 +418,45 @@ def update_user(user_id: int, **fields):
     with get_cursor(commit=True) as cur:
         cur.execute(f"UPDATE users SET {set_clause} WHERE user_id = %s", tuple(params))
     return get_user(user_id)
+
+
+# ---------------------------------------------------------------
+# Rental preferences (Module 11)
+# ---------------------------------------------------------------
+
+PREFERENCE_FIELDS = (
+    "preferred_city", "min_budget", "max_budget", "bedrooms",
+    "property_type", "furnishing", "needs_parking",
+)
+
+
+def get_preferences(user_id: int) -> dict:
+    """A user's saved preferences. Someone who never saved any gets the same
+    shape with every field empty, so callers never have to special-case it."""
+    with get_cursor() as cur:
+        cur.execute(
+            f"SELECT {', '.join(PREFERENCE_FIELDS)} FROM user_preferences WHERE user_id = %s",
+            (user_id,),
+        )
+        row = cur.fetchone()
+    if not row:
+        return {**{f: None for f in PREFERENCE_FIELDS}, "needs_parking": False}
+    row["needs_parking"] = bool(row["needs_parking"])
+    return row
+
+
+def save_preferences(user_id: int, prefs: dict) -> dict:
+    """Create or replace the user's preferences (one row per user)."""
+    columns = ", ".join(PREFERENCE_FIELDS)
+    placeholders = ", ".join(["%s"] * len(PREFERENCE_FIELDS))
+    updates = ", ".join(f"{f} = VALUES({f})" for f in PREFERENCE_FIELDS)
+    with get_cursor(commit=True) as cur:
+        cur.execute(
+            f"INSERT INTO user_preferences (user_id, {columns}) VALUES (%s, {placeholders}) "
+            f"ON DUPLICATE KEY UPDATE {updates}",
+            (user_id, *[prefs.get(f) for f in PREFERENCE_FIELDS]),
+        )
+    return get_preferences(user_id)
 
 
 # ---------------------------------------------------------------

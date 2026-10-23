@@ -28,11 +28,12 @@ Pages:
   GET /             Property list + filter (Module 2)
   GET /my-favorites Saved properties (Module 3)
   GET /my-visits    Scheduled visits (Module 3)
-  GET /ai-finder    Natural-language property search (Module 4)
   GET /compare      Side-by-side comparison (Module 6)
   GET /profile      User details + AI rental insights (Module 6)
   GET /login        Login page (Module 7)
   GET /signup       Signup page (Module 7)
+  GET /property/{id} Property detail page
+  GET /contact      Contact page (Module 9); POST /contact stores a message
 
 Module 7 (auth) changed several endpoint shapes from earlier modules —
 see README "Module 7" for the full list of what moved and why. The
@@ -42,14 +43,19 @@ wasn't just a style choice — the old shape let any client view or edit
 any other user's data by changing a query parameter.
 """
 
+import logging
 import os
+from typing import Literal
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from mysql.connector import Error as MySQLError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 import auth
@@ -60,12 +66,27 @@ from schemas import (
     AISearchRequest,
     ChatRequest,
     CompareRequest,
+    ContactCreate,
     FavoriteCreate,
     LoginRequest,
+    PreferencesUpdate,
     SignupRequest,
     UserUpdate,
     VisitCreate,
 )
+
+logger = logging.getLogger("rentwise")
+
+# Module 10: the session cookie is only as safe as SESSION_SECRET_KEY. If it is
+# missing or still a placeholder, the key is public (it's in this file / the
+# example env file) and anyone could forge a login cookie. Warn loudly, don't
+# refuse to start - that would break first-time local setup.
+_INSECURE_SESSION_KEYS = {"", "dev-only-change-this-before-any-real-deploy", "change_this_to_a_random_string"}
+if os.getenv("SESSION_SECRET_KEY", "") in _INSECURE_SESSION_KEYS:
+    logger.warning(
+        "SESSION_SECRET_KEY is missing or still a placeholder - set a random value in .env. "
+        'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"'
+    )
 
 app = FastAPI(title="RentWise API", version="0.1.0")
 
@@ -94,12 +115,35 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-def render(request: Request, template_name: str, **extra):
+def inr(value) -> str:
+    """Format a number as rupees with Indian digit grouping (1,50,000),
+    matching money() in static/js/common.js so server-rendered and
+    JS-rendered prices look identical."""
+    n = int(round(float(value)))
+    digits = str(abs(n))
+    if len(digits) > 3:
+        head, tail = digits[:-3], digits[-3:]
+        groups = []
+        while len(head) > 2:
+            groups.insert(0, head[-2:])
+            head = head[:-2]
+        if head:
+            groups.insert(0, head)
+        digits = ",".join(groups + [tail])
+    return ("-" if n < 0 else "") + "\u20b9" + digits
+
+
+templates.env.filters["inr"] = inr
+
+
+def render(request: Request, template_name: str, status_code: int = 200, **extra):
     """Every page route uses this instead of templates.TemplateResponse
     directly, so `user` (or None for guests) is always available to
     base.html's nav without repeating this line on every route."""
     user = auth.get_current_user_optional(request)
-    return templates.TemplateResponse(request, template_name, {"user": user, **extra})
+    return templates.TemplateResponse(
+        request, template_name, {"user": user, **extra}, status_code=status_code
+    )
 
 
 # ---------------------------------------------------------------
@@ -124,14 +168,24 @@ def visits_page(request: Request):
     return render(request, "visits.html")
 
 
-@app.get("/ai-finder")
-def ai_finder_page(request: Request):
-    return render(request, "ai_finder.html")
-
-
 @app.get("/compare")
 def compare_page(request: Request):
     return render(request, "compare.html")
+
+
+# NOTE: singular /property/{id}, not /properties/{id} — that exact path is
+# already the JSON API route further down (same reasoning as /my-favorites).
+@app.get("/property/{property_id}")
+def property_detail_page(request: Request, property_id: int):
+    prop = db.get_property(property_id)
+    if not prop:
+        return render(request, "property_detail.html", status_code=404, property=None)
+    return render(request, "property_detail.html", property=prop)
+
+
+@app.get("/contact")
+def contact_page(request: Request):
+    return render(request, "contact.html", active="contact")
 
 
 @app.get("/profile")
@@ -191,9 +245,67 @@ def health_check():
     return {"status": "ok"}
 
 
+# ---------------------------------------------------------------
+# Friendly errors (Module 10)
+# Visitors loading a PAGE get a styled error page; fetch() calls from the
+# site's JavaScript still get JSON. Real error details go to the server log,
+# never to the browser (the old handler sent the raw MySQL message - host,
+# port and all - to whoever triggered it).
+# ---------------------------------------------------------------
+
+def _wants_html(request: Request) -> bool:
+    # Browsers navigating to a page send "text/html" in Accept; fetch() calls
+    # from our JS send "*/*", so API clients keep getting JSON.
+    return "text/html" in request.headers.get("accept", "")
+
+
+def _error_page(request: Request, status_code: int, title: str, message: str):
+    try:
+        user = auth.get_current_user_optional(request)
+    except Exception:
+        user = None  # e.g. the database itself is what broke - don't fail twice
+    return templates.TemplateResponse(
+        request,
+        "error.html",
+        {"user": user, "status_code": status_code, "title": title, "message": message},
+        status_code=status_code,
+    )
+
+
+NOT_FOUND_TEXT = ("Page not found", "The page you're looking for doesn't exist or may have moved.")
+SERVER_ERROR_TEXT = ("Something went wrong", "We hit a problem on our side. Please try again in a moment.")
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404 and _wants_html(request):
+        return _error_page(request, 404, *NOT_FOUND_TEXT)
+    return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    # A page address like /property/abc is simply "not found" to a visitor.
+    if _wants_html(request):
+        return _error_page(request, 404, *NOT_FOUND_TEXT)
+    return await request_validation_exception_handler(request, exc)
+
+
 @app.exception_handler(MySQLError)
-async def mysql_error_handler(request, exc):
-    raise HTTPException(status_code=500, detail=f"Database error: {exc}")
+async def mysql_error_handler(request: Request, exc: MySQLError):
+    logger.error("Database error on %s %s: %s", request.method, request.url.path, exc)
+    if _wants_html(request):
+        return _error_page(request, 500, *SERVER_ERROR_TEXT)
+    return JSONResponse(status_code=500, content={"detail": "Something went wrong on our side. Please try again in a moment."})
+
+
+@app.exception_handler(Exception)
+async def unexpected_error_handler(request: Request, exc: Exception):
+    # Last resort for bugs nobody anticipated. The server still logs the full
+    # traceback; the visitor just sees a calm message instead of a stack trace.
+    if _wants_html(request):
+        return _error_page(request, 500, *SERVER_ERROR_TEXT)
+    return JSONResponse(status_code=500, content={"detail": "Something went wrong on our side. Please try again in a moment."})
 
 
 # ---------------------------------------------------------------
@@ -321,7 +433,31 @@ def get_my_profile(current_user: dict = Depends(auth.get_current_user)):
 
 @app.put("/users/me")
 def update_my_profile(payload: UserUpdate, current_user: dict = Depends(auth.get_current_user)):
-    return db.update_user(current_user["user_id"], **payload.model_dump(exclude_unset=True))
+    fields = payload.model_dump(exclude_unset=True)
+
+    # Without this, taking another account's email hit the database's UNIQUE
+    # rule and the visitor just saw a generic "something went wrong".
+    new_email = fields.get("email")
+    if new_email:
+        owner = db.get_user_by_email_with_hash(new_email)
+        if owner and owner["user_id"] != current_user["user_id"]:
+            raise HTTPException(status_code=400, detail="That email is already used by another account")
+
+    return db.update_user(current_user["user_id"], **fields)
+
+
+# ---------------------------------------------------------------
+# Rental preferences (Module 11) - private to the logged-in user
+# ---------------------------------------------------------------
+
+@app.get("/users/me/preferences")
+def get_my_preferences(current_user: dict = Depends(auth.get_current_user)):
+    return db.get_preferences(current_user["user_id"])
+
+
+@app.put("/users/me/preferences")
+def update_my_preferences(payload: PreferencesUpdate, current_user: dict = Depends(auth.get_current_user)):
+    return db.save_preferences(current_user["user_id"], payload.model_dump())
 
 
 # ---------------------------------------------------------------
@@ -449,10 +585,17 @@ def chatbot(payload: ChatRequest):
 # Properties (public — browsing never requires login)
 # ---------------------------------------------------------------
 
+SortOption = Literal["newest", "rent_low", "rent_high"]
+
+
 @app.get("/properties")
-def get_properties(page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
+def get_properties(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    sort: SortOption = "newest",
+):
     offset = (page - 1) * page_size
-    items = db.list_properties(limit=page_size, offset=offset)
+    items = db.list_properties(limit=page_size, offset=offset, sort=sort)
     total = db.count_properties()
     return {"page": page, "page_size": page_size, "total": total, "results": items}
 
@@ -473,13 +616,14 @@ def filter_properties(
     furnishing: str | None = None,
     parking: bool | None = None,
     limit: int = Query(20, ge=1, le=100),
+    sort: SortOption = "newest",
 ):
     if min_rent is not None and max_rent is not None and min_rent > max_rent:
         raise HTTPException(status_code=400, detail="min_rent cannot exceed max_rent")
 
     results = db.filter_properties(
         city=city, property_type=property_type, min_rent=min_rent, max_rent=max_rent,
-        bedrooms=bedrooms, furnishing=furnishing, parking=parking, limit=limit,
+        bedrooms=bedrooms, furnishing=furnishing, parking=parking, limit=limit, sort=sort,
     )
     return {"count": len(results), "results": results}
 
@@ -518,6 +662,41 @@ def delete_favorite(favorite_id: int, current_user: dict = Depends(auth.get_curr
 
 
 # ---------------------------------------------------------------
+# Contact (Module 9) — open to guests and logged-in users alike
+# ---------------------------------------------------------------
+
+# Anti-spam limits. Deliberately simple: no extra libraries, just a count of
+# recent rows. They stop a bot flooding the table; they are not a full
+# defence (a determined attacker can vary emails).
+CONTACT_MAX_PER_EMAIL_PER_HOUR = 3
+CONTACT_MAX_TOTAL_PER_HOUR = 50
+
+
+@app.post("/contact", status_code=201)
+def submit_contact(payload: ContactCreate, request: Request):
+    # Honeypot: real visitors never see this field. If it has text, it was a
+    # bot — answer "success" so it learns nothing, and store nothing.
+    if payload.website:
+        return {"status": "received"}
+
+    email = payload.email.lower()
+    if (
+        db.count_recent_contact_messages(email) >= CONTACT_MAX_PER_EMAIL_PER_HOUR
+        or db.count_recent_contact_messages() >= CONTACT_MAX_TOTAL_PER_HOUR
+    ):
+        raise HTTPException(
+            status_code=429,
+            detail="We've received a lot of messages from you recently. Please try again in a little while.",
+        )
+
+    user = auth.get_current_user_optional(request)
+    db.create_contact_message(
+        user["user_id"] if user else None, payload.name, email, payload.topic, payload.message
+    )
+    return {"status": "received"}
+
+
+# ---------------------------------------------------------------
 # Visits
 # ---------------------------------------------------------------
 
@@ -531,8 +710,11 @@ def visit_availability(property_id: int, visit_date: str):
 
 @app.post("/visits", status_code=201)
 def schedule_visit(payload: VisitCreate, current_user: dict = Depends(auth.get_current_user)):
-    if not db.get_property(payload.property_id):
+    prop = db.get_property(payload.property_id)
+    if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
+    if not prop["availability"]:
+        raise HTTPException(status_code=400, detail="This property is not available for visits right now")
 
     slot = payload.visit_time.strftime("%H:%M")
     open_slots = db.get_visit_availability(payload.property_id, str(payload.visit_date))
@@ -554,8 +736,10 @@ def get_my_visits(current_user: dict = Depends(auth.get_current_user)):
 # and /properties/filter — otherwise FastAPI tries to parse "mine" as an
 # integer visit_id and returns 422 instead of ever reaching /visits/mine.
 @app.get("/visits/{visit_id}")
-def get_visit(visit_id: int):
+def get_visit(visit_id: int, current_user: dict = Depends(auth.get_current_user)):
     visit = db.get_visit(visit_id)
-    if not visit:
+    # Someone else's visit gets the same 404 as a visit that doesn't exist,
+    # so visit ids can't be probed to see which ones are taken.
+    if not visit or visit["user_id"] != current_user["user_id"]:
         raise HTTPException(status_code=404, detail="Visit not found")
     return visit

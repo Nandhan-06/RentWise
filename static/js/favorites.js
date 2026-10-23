@@ -1,15 +1,31 @@
 const grid = document.getElementById("property-grid");
 const resultCount = document.getElementById("result-count");
-const emptyState = document.getElementById("empty-state");
+
+function showEmptyFavorites() {
+  resultCount.textContent = "";
+  showState(grid, "empty", {
+    title: "You haven't saved any properties yet",
+    message: 'Browse the properties and hit "Save" on the ones you like.',
+    actionLabel: "Browse properties",
+    actionHref: "/",
+  });
+}
 
 function favoriteCard(p) {
   const card = document.createElement("article");
   card.className = "property-card";
   card.innerHTML = `
-    <div class="card-image">No image</div>
+    <a class="card-image" href="/property/${p.property_id}" aria-label="View ${p.title}">
+      <img
+        src="${p.image_url || '/static/images/placeholder.svg'}"
+        alt="${p.title}"
+        loading="lazy"
+        onerror="this.onerror=null;this.src='/static/images/placeholder.svg'"
+      >
+    </a>
     <div class="card-body">
       <span class="badge">${p.furnishing}</span>
-      <h3 class="card-title">${p.title}</h3>
+      <h3 class="card-title"><a href="/property/${p.property_id}">${p.title}</a></h3>
       <p class="card-location">${p.location}, ${p.city}</p>
       <p class="card-rent">${money(p.rent)} <span>/ month</span></p>
       <p class="card-specs">${specsLine(p)}</p>
@@ -20,22 +36,26 @@ function favoriteCard(p) {
 }
 
 async function loadFavorites() {
-  resultCount.textContent = "Loading…";
+  resultCount.textContent = "";
+  showState(grid, "loading", { title: "Loading your saved properties…" });
   try {
     const res = await authFetch("/favorites");
     if (!res) return; // authFetch already redirected to /login
     if (!res.ok) throw new Error("Request failed");
     const data = await res.json();
+    if (data.results.length === 0) {
+      showEmptyFavorites();
+      return;
+    }
     grid.innerHTML = "";
-    emptyState.hidden = data.results.length > 0;
-    resultCount.textContent = data.results.length
-      ? `${data.results.length} saved propert${data.results.length === 1 ? "y" : "ies"}`
-      : "";
+    resultCount.textContent = `${data.results.length} saved propert${data.results.length === 1 ? "y" : "ies"}`;
     data.results.forEach((p) => grid.appendChild(favoriteCard(p)));
   } catch (err) {
     resultCount.textContent = "";
-    emptyState.hidden = false;
-    emptyState.textContent = "Couldn't reach the server. Make sure uvicorn is running.";
+    showState(grid, "error", {
+      title: "We couldn't load your saved properties",
+      onAction: loadFavorites,
+    });
   }
 }
 
@@ -50,8 +70,7 @@ grid.addEventListener("click", async (e) => {
     if (!res.ok && res.status !== 204) throw new Error("Request failed");
     btn.closest(".property-card").remove();
     if (!grid.children.length) {
-      emptyState.hidden = false;
-      resultCount.textContent = "";
+      showEmptyFavorites();
     } else {
       resultCount.textContent = `${grid.children.length} saved propert${grid.children.length === 1 ? "y" : "ies"}`;
     }

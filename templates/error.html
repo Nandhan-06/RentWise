@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · RentWise{% endblock %}
+
+{% block content %}
+  <section class="error-page">
+    <p class="error-code">{{ status_code }}</p>
+    <h1>{{ title }}</h1>
+    <p class="error-message">{{ message }}</p>
+    <div class="error-actions">
+      <a class="state-action" href="/">Back to properties</a>
+      {% if status_code >= 500 %}
+        <button type="button" class="state-action" onclick="window.location.reload()">Try again</button>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

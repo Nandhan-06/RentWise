@@ -18,5 +18,5 @@ Go to the Profile page from the navigation bar. You can update your name, phone 
 ## Is there a fee to use RentWise?
 No. Browsing listings, saving favorites, scheduling visits, and using the AI search or chatbot are all free for renters.
 
-## How accurate is the AI Property Finder?
-The AI Property Finder only recommends properties that actually exist in RentWise's database — it turns your description into search filters and runs a real search, so it will never invent a listing that doesn't exist.
+## How accurate is the AI search?
+The RentWise assistant only recommends properties that actually exist in RentWise's database — it turns your description into search filters and runs a real search, so it will never invent a listing that doesn't exist.

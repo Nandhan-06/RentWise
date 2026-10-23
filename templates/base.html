@@ -24,7 +24,6 @@
       </a>
       <nav class="main-nav">
         <a href="/" {% if active=='properties' %}class="active" {% endif %}>Properties</a>
-        <!-- <a href="/ai-finder" {% if active=='ai-finder' %}class="active" {% endif %}>AI Finder</a> -->
         <!-- <a href="/voice-assistant" {% if active == 'voice-assistant' %}class="active"{% endif %}>Voice Assistant</a> -->
         <a href="/my-favorites" {% if active=='favorites' %}class="active" {% endif %}>Favorites</a>
         <a href="/my-visits" {% if active=='visits' %}class="active" {% endif %}>My Visits</a>
@@ -67,20 +66,21 @@
         <h3>Quick Links</h3>
         <ul>
           <li><a href="/">Home</a></li>
-          <li><a href="/properties">Properties</a></li>
-          <li><a href="/finder">Property Finder</a></li>
-          <li><a href="/favourites">Favourites</a></li>
-          <li><a href="/visits">Visits</a></li>
+          <li><a href="/#property-grid">Properties</a></li>
+          <li><a href="/my-favorites">Favorites</a></li>
+          <li><a href="/my-visits">My Visits</a></li>
+          {% if user %}
+          <li><a href="/profile">Profile</a></li>
+          {% else %}
           <li><a href="/login">Login / Sign Up</a></li>
+          {% endif %}
         </ul>
       </nav>
 
       <nav class="footer-col">
         <h3>Popular Cities</h3>
         <ul>
-          <li><a href="/properties?city=kochi">Kochi</a></li>
-          <li><a href="/properties?city=kakkanad">Kakkanad</a></li>
-          <li><a href="/properties?city=edappally">Edappally</a></li>
+          <li><a href="/?city=Kochi">Kochi</a></li>
         </ul>
       </nav>
 
@@ -88,6 +88,7 @@
         <h3>Support</h3>
         <ul>
           <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Terms of Service</a></li>
           <li><a href="/contact">Contact Us</a></li>
         </ul>
       </nav>

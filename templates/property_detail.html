@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{% if property %}{{ property.title }}{% else %}Property not found{% endif %} · RentWise{% endblock %}
+
+{% block content %}
+{% if not property %}
+  <section class="page-head">
+    <h1>Property not found</h1>
+  </section>
+  <p class="empty-state">
+    That listing doesn't exist or has been removed.
+    <a href="/">Browse all properties</a>.
+  </p>
+{% else %}
+  <a class="back-link" href="/">&larr; Back to properties</a>
+
+  <article class="detail" id="property-detail"
+           data-property-id="{{ property.property_id }}"
+           data-logged-in="{{ 'true' if user else 'false' }}"
+           data-available="{{ 'true' if property.availability else 'false' }}">
+
+    <div class="detail-gallery">
+      <div class="detail-main-image">
+        <img id="detail-main-img"
+             src="{{ property.images[0] if property.images else '/static/images/placeholder.svg' }}"
+             alt="{{ property.title }}"
+             onerror="this.onerror=null;this.src='/static/images/placeholder.svg'">
+      </div>
+      {% if property.images|length > 1 %}
+      <div class="detail-thumbs">
+        {% for img in property.images %}
+        <button type="button" class="detail-thumb{% if loop.first %} active{% endif %}"
+                data-src="{{ img }}" aria-label="Show photo {{ loop.index }}">
+          <img src="{{ img }}" alt="" loading="lazy"
+               onerror="this.onerror=null;this.src='/static/images/placeholder.svg'">
+        </button>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="detail-info">
+      <div class="detail-badges">
+        {% if property.availability %}
+          <span class="badge badge-available">Available</span>
+        {% else %}
+          <span class="badge badge-unavailable">Not available</span>
+        {% endif %}
+        <span class="badge">{{ property.property_type }}</span>
+        <span class="badge">{{ property.furnishing }}</span>
+      </div>
+
+      <h1 class="detail-title">{{ property.title }}</h1>
+      <p class="card-location">{{ property.location }}, {{ property.city }}</p>
+      <p class="detail-rent">{{ property.rent | inr }} <span>/ month</span></p>
+
+      <dl class="detail-specs">
+        <div><dt>Bedrooms</dt><dd>{{ property.bedrooms }}</dd></div>
+        <div><dt>Bathrooms</dt><dd>{{ property.bathrooms }}</dd></div>
+        <div><dt>Area</dt><dd>{% if property.area_sqft %}{{ property.area_sqft }} sqft{% else %}&mdash;{% endif %}</dd></div>
+        <div><dt>Parking</dt><dd>{{ 'Yes' if property.parking else 'No' }}</dd></div>
+      </dl>
+
+      <div class="detail-actions">
+        <button type="button" class="detail-btn" id="detail-save">Save to favourites</button>
+        <button type="button" class="detail-btn detail-btn-primary" id="detail-visit-toggle"
+                {% if not property.availability %}disabled{% endif %}>Schedule a visit</button>
+      </div>
+      {% if not property.availability %}
+        <p class="detail-note">This property is not available right now, so visits can't be booked.</p>
+      {% endif %}
+      <p id="detail-action-status" class="visit-status" aria-live="polite"></p>
+
+      <div class="card-visit-form detail-visit-form" id="detail-visit-form" hidden>
+        <label>Pick a date
+          <input type="date" id="detail-visit-date" />
+        </label>
+        <button type="button" class="check-slots" id="detail-check-slots">Check availability</button>
+        <div class="slot-list" id="detail-slot-list"></div>
+        <p class="visit-status" id="detail-visit-status" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <section class="detail-section">
+      <h2>About this property</h2>
+      {% if property.description %}
+        <p>{{ property.description }}</p>
+      {% else %}
+        <p class="detail-muted">No description has been added for this property yet.</p>
+      {% endif %}
+    </section>
+
+    <section class="detail-section">
+      <h2>Amenities</h2>
+      {% if property.amenities %}
+        <div class="amenity-list">
+          {% for a in property.amenities %}<span>{{ a.amenity_name }}</span>{% endfor %}
+        </div>
+      {% else %}
+        <p class="detail-muted">No amenities listed.</p>
+      {% endif %}
+    </section>
+  </article>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if property %}<script src="/static/js/property_detail.js"></script>{% endif %}
+{% endblock %}

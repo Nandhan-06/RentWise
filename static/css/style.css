@@ -1776,3 +1776,679 @@ h3 {
     flex-direction: row;
   }
 }
+
+/* =========================================================
+   PROPERTY DETAIL PAGE  (/property/{id})
+   Uses the existing tokens (--accent, --clay, --border, ...)
+   ========================================================= */
+
+/* Make the HTML `hidden` attribute always win. Without this, any class that
+   sets its own `display` (e.g. .card-visit-form {display:flex}) silently
+   overrides `hidden`, so panels that should start closed were showing. */
+[hidden] {
+  display: none !important;
+}
+
+/* Links inside cards (title + "View details") should look like the
+   plain text/buttons they replaced, not default blue underlined links. */
+.card-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-title a:hover {
+  color: var(--accent);
+}
+
+a.card-toggle {
+  text-decoration: none;
+}
+
+a.card-toggle:hover {
+  text-decoration: underline;
+}
+
+.back-link {
+  display: inline-block;
+  margin: 24px 0 16px;
+  color: var(--muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--accent);
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 32px;
+  margin-bottom: 56px;
+}
+
+.detail-main-image {
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, #EFEAE0, #E4DFD3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.detail-main-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.detail-thumbs {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.detail-thumb {
+  flex: 0 0 84px;
+  height: 64px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.detail-thumb.active,
+.detail-thumb:hover {
+  border-color: var(--accent);
+  opacity: 1;
+}
+
+.detail-thumb img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge-available {
+  background: rgba(47, 93, 80, 0.14);
+  color: var(--accent);
+}
+
+.badge-unavailable {
+  background: rgba(168, 92, 50, 0.14);
+  color: var(--clay);
+}
+
+.detail-title {
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.detail-rent {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0;
+}
+
+.detail-rent span {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.detail-specs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 8px 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-specs dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.detail-specs dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detail-btn {
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.detail-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.detail-btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.detail-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.detail-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--clay);
+}
+
+.detail-visit-form {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: 14px;
+}
+
+.detail-section {
+  grid-column: 1 / -1;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.detail-section h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.detail-section p {
+  margin: 0;
+  max-width: 70ch;
+}
+
+.detail-muted {
+  color: var(--muted);
+}
+
+@media (max-width: 800px) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .detail-title {
+    font-size: 24px;
+  }
+}
+
+/* Amenity pills (used on the detail page; the old inline expand had no styling) */
+.amenity-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.amenity-list span {
+  font-size: 13px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* =========================================================
+   MODULE 9 — Contact page, mobile header
+   ========================================================= */
+
+.contact-page {
+  max-width: 560px;
+}
+
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* Honeypot field: off-screen rather than display:none, because some bots
+   skip fields that are display:none. Real people and screen readers never
+   reach it (aria-hidden + tabindex -1 in the markup). */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.contact-success h2 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.contact-success a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.contact-aside {
+  margin: 18px 4px 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Header on phones: the logo on its own row, the nav links wrapping beneath
+   it, instead of one long row that ran off the right edge of the screen. */
+@media (max-width: 800px) {
+  .header-inner {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .wordmark img {
+    height: 56px;
+  }
+
+  .main-nav {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    padding-bottom: 8px;
+  }
+}
+
+/* Submit buttons on login / signup / contact were falling back to the
+   browser's default grey button (no rule styled them). One shared rule
+   gives all three the same primary button as the rest of the site. */
+.auth-form button[type="submit"] {
+  padding: 11px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-form button[type="submit"]:hover:not(:disabled) {
+  background: #264c41;
+}
+
+.auth-form button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-card .auth-error {
+  margin-bottom: 14px;
+}
+
+/* =========================================================
+   MODULE 10 — Sorting, loading / empty / error states, error pages
+   ========================================================= */
+
+/* Result count on the left, sort box on the right */
+.results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 18px;
+}
+
+.results-bar .result-count {
+  margin: 0;
+}
+
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sort-control select {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* One panel for "loading", "nothing here" and "something broke" (see showState in common.js) */
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* inside a grid or list, take the full row instead of one narrow column */
+.property-grid > .state,
+.visit-list > .state {
+  grid-column: 1 / -1;
+}
+
+.state-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.state-message {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 14px;
+}
+
+.state-error .state-title {
+  color: var(--clay);
+}
+
+.state-action {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.state-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.state-spinner {
+  width: 26px;
+  height: 26px;
+  margin-bottom: 6px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: state-spin 0.8s linear infinite;
+}
+
+@keyframes state-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Respect people who ask their device for less motion */
+@media (prefers-reduced-motion: reduce) {
+  .state-spinner {
+    animation: none;
+  }
+}
+
+/* The ".ai-summary" box on the profile page already has its own padding */
+.ai-summary .state {
+  padding: 18px 8px;
+}
+
+/* Full-page 404 / 500 */
+.error-page {
+  max-width: 480px;
+  margin: 72px auto 96px;
+  text-align: center;
+}
+
+.error-code {
+  margin: 0 0 4px;
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.error-page h1 {
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.error-message {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
+.error-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* =========================================================
+   MODULE 11 — Profile page sections + rental preferences
+   ========================================================= */
+
+.profile-section {
+  padding-top: 32px;
+  margin-bottom: 12px;
+}
+
+.profile-section h2 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.profile-section .subhead {
+  margin: 0;
+}
+
+.pref-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* Buttons + status message sit on one row at the end of the form */
+.profile-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-basis: 100%;
+}
+
+.pref-matches {
+  margin: 0 0 8px;
+}
+
+@media (max-width: 600px) {
+  .profile-form .field {
+    flex: 1 1 100%;
+  }
+}
+
+/* Profile forms: same look as the filter bar on the home page
+   (label above the box, rounded inputs, green primary button). */
+.profile-form {
+  align-items: flex-end;
+  gap: 18px 20px;
+  padding: 24px 24px 20px;
+}
+
+.profile-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 150px;
+  flex: 1 1 180px;
+}
+
+.profile-form .field label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.profile-form .field input,
+.profile-form .field select {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--ink);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-form .field input:focus,
+.profile-form .field select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47, 93, 80, 0.12);
+}
+
+.profile-form button[type="submit"] {
+  height: 42px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.profile-form button[type="submit"]:hover {
+  background: #245448;
+}
+
+.profile-form button.ghost {
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.profile-form button.ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pref-check {
+  flex-basis: 100%;
+  padding-bottom: 0;
+}
+
+.pref-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+/* Profile forms as an even grid, so fields line up and share the same width */
+.profile-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  align-items: end;
+}
+
+.profile-form .field {
+  min-width: 0;
+}
+
+.profile-form > button[type="submit"] {
+  justify-self: start;
+}
+
+.pref-check,
+.profile-actions {
+  grid-column: 1 / -1;
+}
+
+/* The "Saved." message takes its own row only while it has something to say */
+#profile-status {
+  grid-column: 1 / -1;
+}
+
+.profile-form .visit-status:empty {
+  display: none;
+}

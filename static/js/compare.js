@@ -1,4 +1,3 @@
-const statusBox = document.getElementById("compare-status");
 const summaryBox = document.getElementById("compare-summary");
 const tableWrap = document.getElementById("compare-table-wrap");
 
@@ -43,12 +42,17 @@ async function loadComparison() {
   const ids = idsParam ? idsParam.split(",").map(Number).filter(Boolean) : [];
 
   if (ids.length < 2) {
-    statusBox.textContent = "";
-    tableWrap.innerHTML = `<p class="empty-state">Select 2 or 3 properties to compare from the <a href="/">Properties</a> page (check "Compare" on each card, then click the Compare bar that appears).</p>`;
+    showState(tableWrap, "empty", {
+      title: "Pick two or three properties to compare",
+      message: 'On the Properties page, tick "Compare" on each card you want, then click the Compare bar that appears.',
+      actionLabel: "Browse properties",
+      actionHref: "/",
+    });
     return;
   }
 
-  statusBox.textContent = "Loading comparison…";
+  summaryBox.hidden = true;
+  showState(tableWrap, "loading", { title: "Comparing properties…" });
 
   try {
     const res = await fetch("/ai/property-compare", {
@@ -61,15 +65,19 @@ async function loadComparison() {
       throw new Error(err.detail || "Request failed");
     }
     const data = await res.json();
-    statusBox.textContent = "";
     renderTable(data.properties);
     if (data.ai_summary) {
       summaryBox.hidden = false;
       summaryBox.textContent = data.ai_summary;
     }
   } catch (err) {
-    statusBox.textContent = "";
-    tableWrap.innerHTML = `<p class="empty-state">Couldn't load comparison: ${err.message}</p>`;
+    showState(tableWrap, "error", {
+      title: "We couldn't load the comparison",
+      // err.message is the server's own explanation (e.g. "Property 99 not found"),
+      // or a generic fallback for network problems.
+      message: err.message && err.message !== "Request failed" && err.message !== "Failed to fetch" ? err.message : undefined,
+      onAction: loadComparison,
+    });
   }
 }
 

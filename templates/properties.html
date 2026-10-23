@@ -69,13 +69,21 @@
   </div>
 </form>
 
-<p id="result-count" class="result-count"></p>
+<div class="results-bar">
+  <p id="result-count" class="result-count"></p>
+  <div class="sort-control">
+    <label for="sort-select">Sort by</label>
+    <!-- form="filter-form" ties this to the filter form even though it sits outside it,
+         so Clear resets it and the form's data includes it. -->
+    <select id="sort-select" name="sort" form="filter-form">
+      <option value="newest">Newest first</option>
+      <option value="rent_low">Rent: low to high</option>
+      <option value="rent_high">Rent: high to low</option>
+    </select>
+  </div>
+</div>
 
 <div id="property-grid" class="property-grid" aria-live="polite"></div>
-
-<p id="empty-state" class="empty-state" hidden>
-  No properties match those filters. Try widening your rent range or clearing a filter.
-</p>
 {% endblock %}
 
 {% block scripts %}

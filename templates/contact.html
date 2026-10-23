@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Contact us · RentWise{% endblock %}
+
+{% block content %}
+  <div class="auth-page contact-page">
+    <div class="auth-card">
+      <h1>Contact us</h1>
+      <p class="subhead">Questions about a listing, a visit or your account? Send us a message.</p>
+
+      <div id="contact-error" class="auth-error" role="alert"></div>
+
+      <form id="contact-form" class="auth-form contact-form" novalidate>
+        <div class="field">
+          <label for="c-name">Your name</label>
+          <input id="c-name" name="name" type="text" required maxlength="100" autocomplete="name"
+                 value="{{ user.name if user else '' }}" />
+        </div>
+        <div class="field">
+          <label for="c-email">Email</label>
+          <input id="c-email" name="email" type="email" required maxlength="255" autocomplete="email"
+                 value="{{ user.email if user else '' }}" />
+        </div>
+        <div class="field">
+          <label for="c-topic">What is this about?</label>
+          <select id="c-topic" name="topic" required>
+            <option>General question</option>
+            <option>Problem with a listing</option>
+            <option>Visit booking</option>
+            <option>My account</option>
+            <option>Feedback</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="c-message">Message</label>
+          <textarea id="c-message" name="message" rows="6" required minlength="10" maxlength="2000"></textarea>
+          <span id="c-count" class="field-hint">0 / 2000</span>
+        </div>
+
+        <!-- Honeypot: hidden from people, bots tend to fill it in. Do not remove. -->
+        <div class="hp-field" aria-hidden="true">
+          <label for="c-website">Leave this field empty</label>
+          <input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <button type="submit" id="contact-submit">Send message</button>
+      </form>
+
+      <div id="contact-success" class="contact-success" role="status" hidden>
+        <h2>Message sent</h2>
+        <p>Thanks - your message has been received.</p>
+        <p><a href="/">Back to properties</a></p>
+      </div>
+    </div>
+
+    <p class="contact-aside">
+      Need an answer right now? The RentWise assistant (chat button, bottom right)
+      can answer questions about listings, amenities and rental policies instantly.
+    </p>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/contact.js"></script>
+{% endblock %}

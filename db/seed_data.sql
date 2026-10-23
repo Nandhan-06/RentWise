@@ -24,25 +24,25 @@ INSERT INTO properties
   (title, property_type, location, city, rent, bedrooms, bathrooms, area_sqft, furnishing, parking, description, image_url, availability)
 VALUES
   ('Sunrise Apartments 2BHK', 'Apartment', 'Kakkanad', 'Kochi', 18000, 2, 2, 950, 'Semi-Furnished', TRUE,
-   'A well-ventilated 2BHK close to Infopark with easy access to public transport.', '/static/images/prop1.jpg', TRUE),
+   'A well-ventilated 2BHK close to Infopark with easy access to public transport.', '/static/images/properties/sunrise-apt-2bhk.png', TRUE),
   ('Green Valley Villa', 'Villa', 'Kakkanad', 'Kochi', 45000, 3, 3, 1800, 'Furnished', TRUE,
-   'Spacious independent villa with a private garden in a gated community.', '/static/images/prop2.jpg', TRUE),
+   'Spacious independent villa with a private garden in a gated community.', '/static/images/properties/green-valley-villa.png', TRUE),
   ('Budget Studio near Metro', 'Studio', 'Edapally', 'Kochi', 9000, 1, 1, 400, 'Unfurnished', FALSE,
-   'Compact studio ideal for a single working professional, walking distance to the metro.', '/static/images/prop3.jpg', TRUE),
+   'Compact studio ideal for a single working professional, walking distance to the metro.', '/static/images/properties/budget-studio.avif', TRUE),
   ('Lakeview Independent House', 'Independent House', 'Kumbalangi', 'Kochi', 25000, 3, 2, 1400, 'Semi-Furnished', TRUE,
-   'Independent house with a lake view and a quiet neighbourhood.', '/static/images/prop4.jpg', TRUE),
+   'Independent house with a lake view and a quiet neighbourhood.', '/static/images/properties/lakeview-independent.png', TRUE),
   ('Cozy PG for Students', 'PG', 'Vytilla', 'Kochi', 6500, 1, 1, 200, 'Furnished', FALSE,
-   'Shared PG accommodation with meals included, close to major colleges.', '/static/images/prop5.jpg', TRUE),
+   'Shared PG accommodation with meals included, close to major colleges.', '/static/images/properties/cozy-pg.avif', TRUE),
   ('Palm Grove Apartments 3BHK', 'Apartment', 'Marine Drive', 'Kochi', 32000, 3, 2, 1300, 'Furnished', TRUE,
-   'Premium apartment with a sea-facing balcony in the heart of the city.', '/static/images/prop6.jpg', TRUE),
+   'Premium apartment with a sea-facing balcony in the heart of the city.', '/static/images/properties/Palmgroove-apt-3bhk.png', TRUE),
   ('Techpark Residency 1BHK', 'Apartment', 'Infopark', 'Kochi', 12000, 1, 1, 600, 'Semi-Furnished', TRUE,
-   'Ideal for IT professionals, five minutes from Infopark Phase 1.', '/static/images/prop7.jpg', TRUE),
+   'Ideal for IT professionals, five minutes from Infopark Phase 1.', '/static/images/properties/Techpark-residency1BHK.png', TRUE),
   ('Hillside Villa', 'Villa', 'Kakkanad', 'Kochi', 55000, 4, 4, 2400, 'Furnished', TRUE,
-   'Luxury 4BHK villa with a private pool and landscaped garden.', '/static/images/prop8.jpg', FALSE),
+   'Luxury 4BHK villa with a private pool and landscaped garden.', NULL, FALSE),
   ('Riverside Independent House', 'Independent House', 'Aluva', 'Kochi', 20000, 2, 2, 1100, 'Unfurnished', TRUE,
-   'Peaceful riverside property, ten minutes from Aluva metro station.', '/static/images/prop9.jpg', TRUE),
+   'Peaceful riverside property, ten minutes from Aluva metro station.', '/static/images/properties/riverside-independent-house.png', TRUE),
   ('Downtown Studio Loft', 'Studio', 'MG Road', 'Kochi', 14000, 1, 1, 500, 'Furnished', FALSE,
-   'Stylish studio loft above a commercial complex on MG Road.', '/static/images/prop10.jpg', TRUE);
+   'Stylish studio loft above a commercial complex on MG Road.', '/static/images/properties/downtown-studio-loft.png', TRUE);
 
 -- Property <-> amenity links
 INSERT INTO property_amenities (property_id, amenity_id) VALUES

@@ -120,11 +120,14 @@ function chatPropertyCard(p) {
   card.innerHTML = `
     <div class="card-body">
       <span class="badge">${p.furnishing}</span>
-      <h3 class="card-title">${p.title}</h3>
+      <h3 class="card-title"><a href="/property/${p.property_id}" target="_blank" rel="noopener">${p.title}</a></h3>
       <p class="card-location">${p.location}, ${p.city}</p>
       <p class="card-rent">${money(p.rent)} <span>/ month</span></p>
       <p class="card-specs">${specsLine(p)}</p>
-      <button class="card-toggle" data-action="save" data-id="${p.property_id}">${ICONS.heartOutline} Save</button>
+      <div class="card-actions">
+        <a class="card-toggle" href="/property/${p.property_id}" target="_blank" rel="noopener">View details</a>
+        <button class="card-toggle" data-action="save" data-id="${p.property_id}">${ICONS.heartOutline} Save</button>
+      </div>
     </div>
   `;
   return card;

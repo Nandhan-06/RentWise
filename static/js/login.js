@@ -21,8 +21,11 @@ loginForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    const params = new URLSearchParams(window.location.search);
-    window.location.href = params.get("next") || "/";
+    // Only follow ?next= if it is a path on THIS site ("/property/3").
+    // Anything else - "https://evil.example", "//evil.example", "/\\evil" -
+    // would let a crafted login link send people to another website.
+    const next = new URLSearchParams(window.location.search).get("next");
+    window.location.href = next && /^\/(?![\/\\])/.test(next) ? next : "/";
   } catch (err) {
     errorBox.textContent = "Couldn't reach the server. Is uvicorn running?";
   }

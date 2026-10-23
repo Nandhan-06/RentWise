@@ -5,32 +5,99 @@
 {% block content %}
   <section class="page-head">
     <h1>Your profile</h1>
-    <p class="subhead">No login yet - this shows the single demo account seeded in the database.</p>
+    <p class="subhead">Your account, what you're looking for, and a quick read on your saved properties.</p>
   </section>
 
+  <!-- 1. Account details -->
+  <section class="profile-section">
+    <h2>Account details</h2>
+  </section>
   <form id="profile-form" class="profile-form">
     <div class="field">
       <label for="p-name">Name</label>
-      <input id="p-name" name="name" type="text" required />
+      <input id="p-name" name="name" type="text" required maxlength="100" />
     </div>
     <div class="field">
       <label for="p-phone">Phone</label>
-      <input id="p-phone" name="phone" type="text" />
+      <input id="p-phone" name="phone" type="text" maxlength="20" />
     </div>
     <div class="field">
       <label for="p-email">Email</label>
       <input id="p-email" name="email" type="email" required />
     </div>
     <button type="submit">Save changes</button>
-    <span id="profile-status" class="visit-status"></span>
+    <span id="profile-status" class="visit-status" role="status"></span>
   </form>
 
-  <section class="page-head" style="padding-top: 32px;">
+  <!-- 2. Rental preferences -->
+  <section class="profile-section">
+    <h2>Rental preferences</h2>
+    <p class="subhead">What are you looking for? Leave anything blank if you don't mind.</p>
+  </section>
+  <form id="pref-form" class="profile-form">
+    <div class="field">
+      <label for="pref-city">Preferred city</label>
+      <input id="pref-city" name="preferred_city" type="text" maxlength="100" placeholder="e.g. Kochi" />
+    </div>
+    <div class="field">
+      <label for="pref-min">Budget from (₹/month)</label>
+      <input id="pref-min" name="min_budget" type="number" min="0" step="500" placeholder="0" />
+    </div>
+    <div class="field">
+      <label for="pref-max">Budget up to (₹/month)</label>
+      <input id="pref-max" name="max_budget" type="number" min="0" step="500" placeholder="No limit" />
+    </div>
+    <div class="field">
+      <label for="pref-bedrooms">Bedrooms</label>
+      <select id="pref-bedrooms" name="bedrooms">
+        <option value="">Any</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4+</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="pref-type">Property type</label>
+      <select id="pref-type" name="property_type">
+        <option value="">Any</option>
+        <option>Apartment</option>
+        <option>Villa</option>
+        <option>Independent House</option>
+        <option>Studio</option>
+        <option>PG</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="pref-furnishing">Furnishing</label>
+      <select id="pref-furnishing" name="furnishing">
+        <option value="">Any</option>
+        <option>Furnished</option>
+        <option>Semi-Furnished</option>
+        <option>Unfurnished</option>
+      </select>
+    </div>
+    <label class="pref-check">
+      <input id="pref-parking" name="needs_parking" type="checkbox" />
+      I need parking
+    </label>
+    <div class="profile-actions">
+      <button type="submit">Save preferences</button>
+      <button type="button" id="pref-clear" class="ghost">Clear</button>
+      <span id="pref-status" class="visit-status" role="status"></span>
+    </div>
+  </form>
+  <p class="pref-matches">
+    <a id="pref-matches" class="state-action" href="/" hidden>See properties that match</a>
+  </p>
+
+  <!-- 3. Insights -->
+  <section class="profile-section">
     <h2>Your rental insights</h2>
     <p class="subhead">A quick AI-generated read on the properties you've saved.</p>
   </section>
 
-  <div id="insights-box" class="ai-summary">Loading…</div>
+  <div id="insights-box" class="ai-summary"></div>
 {% endblock %}
 
 {% block scripts %}

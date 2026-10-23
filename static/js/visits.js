@@ -1,5 +1,4 @@
 const visitList = document.getElementById("visit-list");
-const emptyState = document.getElementById("empty-state");
 
 function statusClass(status) {
   return { Scheduled: "status-scheduled", Completed: "status-completed", Cancelled: "status-cancelled" }[status] || "";
@@ -23,17 +22,28 @@ function visitRow(v) {
 }
 
 async function loadVisits() {
+  showState(visitList, "loading", { title: "Loading your visits…" });
   try {
     const res = await authFetch("/visits/mine");
     if (!res) return; // authFetch already redirected to /login
     if (!res.ok) throw new Error("Request failed");
     const data = await res.json();
+    if (data.results.length === 0) {
+      showState(visitList, "empty", {
+        title: "No visits scheduled yet",
+        message: 'Open a property and choose "Schedule a visit" to book one.',
+        actionLabel: "Browse properties",
+        actionHref: "/",
+      });
+      return;
+    }
     visitList.innerHTML = "";
-    emptyState.hidden = data.results.length > 0;
     data.results.forEach((v) => visitList.appendChild(visitRow(v)));
   } catch (err) {
-    emptyState.hidden = false;
-    emptyState.textContent = "Couldn't reach the server. Make sure uvicorn is running.";
+    showState(visitList, "error", {
+      title: "We couldn't load your visits",
+      onAction: loadVisits,
+    });
   }
 }
 

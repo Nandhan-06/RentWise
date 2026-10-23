@@ -1,23 +1,23 @@
 const grid = document.getElementById("property-grid");
 const resultCount = document.getElementById("result-count");
-const emptyState = document.getElementById("empty-state");
+const sortSelect = document.getElementById("sort-select");
 const filterForm = document.getElementById("filter-form");
 
 function propertyCard(p) {
   const card = document.createElement("article");
   card.className = "property-card";
   card.innerHTML = `
-    <div class="card-image">
+    <a class="card-image" href="/property/${p.property_id}" aria-label="View ${p.title}">
       <img
-        src="${p.image_url || '/static/images/prop8.jpg'}"
+        src="${p.image_url || '/static/images/placeholder.svg'}"
         alt="${p.title}"
         loading="lazy"
-        onerror="this.style.display='none'"
+        onerror="this.onerror=null;this.src='/static/images/placeholder.svg'"
       >
-    </div>
+    </a>
     <div class="card-body">
       <span class="badge">${p.furnishing}</span>
-      <h3 class="card-title">${p.title}</h3>
+      <h3 class="card-title"><a href="/property/${p.property_id}">${p.title}</a></h3>
       <p class="card-location">${p.location}, ${p.city}</p>
       <p class="card-rent">${money(p.rent)} <span>/ month</span></p>
       <div class="card-specs">
@@ -27,15 +27,14 @@ function propertyCard(p) {
         <span>${p.parking ? "Parking" : "No parking"}</span>
       </div>
       <div class="card-actions">
-        <button class="card-toggle" data-action="details" data-id="${p.property_id}">View details</button>
+        <a class="card-toggle" href="/property/${p.property_id}">View details</a>
         <button class="card-toggle" data-action="save" data-id="${p.property_id}">${ICONS.heartOutline} Save</button>
         <button class="card-toggle" data-action="visit" data-id="${p.property_id}">Schedule visit</button>
       </div>
       <label class="compare-check">
-        <input type="checkbox" class="compare-box" data-id="${p.property_id}" data-title="${p.title}" />
+        <input type="checkbox" class="compare-box" data-id="${p.property_id}" data-title="${p.title}" ${selectedForCompare.has(p.property_id) ? "checked" : ""} />
         Compare
       </label>
-      <div class="card-details" hidden></div>
       <div class="card-visit-form" hidden>
         <label>Pick a date
           <input type="date" class="visit-date" min="${new Date().toISOString().split("T")[0]}" />
@@ -51,45 +50,13 @@ function propertyCard(p) {
 
 function renderProperties(properties) {
   grid.innerHTML = "";
-  emptyState.hidden = properties.length > 0;
   properties.forEach((p) => grid.appendChild(propertyCard(p)));
-}
-
-// Fetch full details (with amenities) only when a card is expanded,
-// since /properties (list) doesn't include the amenities join.
-async function loadDetails(propertyId, container) {
-  container.innerHTML = "Loading…";
-  try {
-    const res = await fetch(`/properties/${propertyId}`);
-    if (!res.ok) throw new Error("Request failed");
-    const data = await res.json();
-    const amenities = data.amenities.length
-      ? `<div class="amenity-list">${data.amenities
-        .map((a) => `<span>${a.amenity_name}</span>`)
-        .join("")}</div>`
-      : "<p>No amenities listed.</p>";
-    container.innerHTML = `<p>${data.description || ""}</p>${amenities}`;
-  } catch (err) {
-    container.innerHTML = "Couldn't load details. Is the server running?";
-  }
 }
 
 grid.addEventListener("click", async (e) => {
   const btn = e.target.closest("button");
   if (!btn) return;
   const card = btn.closest(".property-card");
-
-  if (btn.dataset.action === "details") {
-    const details = card.querySelector(".card-details");
-    const isHidden = details.hidden;
-    details.hidden = !isHidden;
-    btn.textContent = isHidden ? "Hide details" : "View details";
-    if (isHidden && !details.dataset.loaded) {
-      details.dataset.loaded = "1";
-      loadDetails(btn.dataset.id, details);
-    }
-    return;
-  }
 
   if (btn.dataset.action === "save") {
     btn.disabled = true;
@@ -178,28 +145,62 @@ grid.addEventListener("click", async (e) => {
 function buildQuery(formData) {
   const params = new URLSearchParams();
   for (const [key, value] of formData.entries()) {
-    if (value) params.set(key, value);
+    if (!value) continue;
+    if (key === "sort" && value === "newest") continue; // the default - keep URLs clean
+    params.set(key, value);
   }
   return params.toString();
 }
 
+// Each search gets a number. If a slower, older response arrives after a newer
+// one (easy to cause by changing the sort quickly), it is ignored instead of
+// overwriting the newer results.
+let latestRequest = 0;
+
+function clearFilters() {
+  filterForm.reset(); // also resets the sort box back to "Newest first"
+  fetchAndRender("");
+}
+
 async function fetchAndRender(query) {
-  resultCount.textContent = "Loading…";
+  const thisRequest = ++latestRequest;
+  resultCount.textContent = "";
+  showState(grid, "loading", { title: "Loading properties…" });
+
+  // Keep the address bar in step with what is on screen, so refreshing or
+  // sharing the link shows the same filters and sort.
+  history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
+
   try {
-    const hasFilters = query.length > 0;
-    const url = hasFilters ? `/properties/filter?${query}` : `/properties`;
+    const url = query ? `/properties/filter?${query}` : `/properties`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("Request failed");
     const data = await res.json();
+    if (thisRequest !== latestRequest) return; // a newer search has started
+
     const results = data.results;
     resultCount.textContent = `${results.length} propert${results.length === 1 ? "y" : "ies"} found`;
+
+    if (results.length === 0) {
+      const filtered = [...new URLSearchParams(query).keys()].some((k) => k !== "sort");
+      showState(grid, "empty", filtered
+        ? {
+            title: "No properties match those filters",
+            message: "Try widening your rent range or removing a filter.",
+            actionLabel: "Clear filters",
+            onAction: clearFilters,
+          }
+        : { title: "No properties are listed right now", message: "Please check back soon." });
+      return;
+    }
     renderProperties(results);
   } catch (err) {
+    if (thisRequest !== latestRequest) return;
     resultCount.textContent = "";
-    grid.innerHTML = "";
-    emptyState.hidden = false;
-    emptyState.textContent =
-      "Couldn't reach the server. Make sure uvicorn is running and MySQL is connected.";
+    showState(grid, "error", {
+      title: "We couldn't load the properties",
+      onAction: () => fetchAndRender(query),
+    });
   }
 }
 
@@ -208,13 +209,23 @@ filterForm.addEventListener("submit", (e) => {
   fetchAndRender(buildQuery(new FormData(filterForm)));
 });
 
-document.getElementById("clear-filters").addEventListener("click", () => {
-  filterForm.reset();
-  fetchAndRender("");
+document.getElementById("clear-filters").addEventListener("click", clearFilters);
+
+// Changing the sort re-runs the current search straight away.
+sortSelect.addEventListener("change", () => {
+  fetchAndRender(buildQuery(new FormData(filterForm)));
 });
 
-// Initial load
-fetchAndRender("");
+// Initial load. If the URL carries filters (e.g. the footer's /?city=Kochi),
+// put them in the form first so the inputs match what is being shown.
+const FILTER_FIELDS = ["city", "property_type", "bedrooms", "min_rent", "max_rent", "sort"];
+const urlParams = new URLSearchParams(window.location.search);
+FILTER_FIELDS.forEach((name) => {
+  if (urlParams.has(name) && filterForm.elements[name]) {
+    filterForm.elements[name].value = urlParams.get(name);
+  }
+});
+fetchAndRender(buildQuery(new FormData(filterForm)));
 
 // --- Compare selection (Module 6) ---
 const MAX_COMPARE = 3;
