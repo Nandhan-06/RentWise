@@ -24,6 +24,13 @@ DB_CONFIG = {
     "database": os.getenv("DB_NAME", "rentwise"),
 }
 
+if os.getenv("DB_HOST"):
+    DB_CONFIG.update({
+        "ssl_ca": os.getenv("DB_SSL_CA", "ca.pem"),
+        "ssl_verify_cert": True,
+        "ssl_verify_identity": True,
+    })
+
 _pool = pooling.MySQLConnectionPool(
     pool_name="rentwise_pool",
     pool_size=5,
